@@ -1,0 +1,38 @@
+# Основные зависимости
+numpy>=1.24
+pandas>=2.0
+scipy>=1.11
+
+# Визуализация
+matplotlib>=3.7
+seaborn>=0.13
+wordcloud>=1.9
+
+# NLP
+nltk>=3.8
+
+# ML
+scikit-learn>=1.3
+joblib>=1.3
+
+# HuggingFace
+datasets>=2.14
+transformers>=4.40
+tokenizers>=0.19
+
+# Fine-tuning (QLoRA) — нужен GPU с CUDA
+peft>=0.10
+trl>=0.8
+bitsandbytes>=0.43
+accelerate>=0.29
+
+# Deep learning
+torch>=2.2
+
+# Опциональные бустинговые библиотеки
+xgboost>=2.0
+lightgbm>=4.3
+
+# Jupyter
+notebook>=7.0
+ipykernel>=6.29
