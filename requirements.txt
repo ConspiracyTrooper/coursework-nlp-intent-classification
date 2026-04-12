@@ -32,6 +32,7 @@ torch>=2.2
 # Опциональные бустинговые библиотеки
 xgboost>=2.0
 lightgbm>=4.3
+catboost>=1.2
 
 # Jupyter
 notebook>=7.0
