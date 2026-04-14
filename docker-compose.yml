@@ -14,7 +14,7 @@ services:
     environment:
       - HF_TOKEN=${HF_TOKEN:-}
       - BASE_MODEL=mistralai/Mistral-7B-Instruct-v0.2
-      - ADAPTER_DIR=/app/models/mistral-qlora-support
+      - MERGED_MODEL=/app/models/mistral-merged
       - USE_4BIT=1
     # ── БЛОК GPU ──────────────────────────────────────────────────────────────
     # Требует: NVIDIA GPU + установленный NVIDIA Container Toolkit (nvidia-docker2)
