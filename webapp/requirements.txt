@@ -1,0 +1,19 @@
+# Web-фреймворк
+fastapi>=0.110
+uvicorn>=0.29
+
+# Классификация интентов
+scikit-learn>=1.3
+joblib>=1.3
+nltk>=3.8
+numpy>=1.24
+
+# Перевод RU↔EN
+deep-translator>=1.11
+
+# LLM-инференс (torch предоставляется базовым Docker-образом pytorch/pytorch)
+transformers>=4.40
+peft>=0.10
+bitsandbytes>=0.43
+accelerate>=0.27
+sentencepiece>=0.1.99

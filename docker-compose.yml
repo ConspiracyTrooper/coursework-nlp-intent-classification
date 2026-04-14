@@ -1,0 +1,34 @@
+services:
+  webapp:
+    build:
+      context: .
+      dockerfile: webapp/Dockerfile
+    image: support-chat-webapp
+    ports:
+      - "8000:8000"
+    volumes:
+      # Артефакты классификатора и LoRA-адаптер (только для чтения)
+      - ./models:/app/models:ro
+      # Кэш HuggingFace — сохраняется между перезапусками (~14 ГБ базовая модель)
+      - hf_cache:/root/.cache/huggingface
+    environment:
+      - HF_TOKEN=${HF_TOKEN:-}
+      - BASE_MODEL=mistralai/Mistral-7B-Instruct-v0.2
+      - ADAPTER_DIR=/app/models/mistral-qlora-support
+      - USE_4BIT=1
+    # ── БЛОК GPU ──────────────────────────────────────────────────────────────
+    # Требует: NVIDIA GPU + установленный NVIDIA Container Toolkit (nvidia-docker2)
+    # Если GPU нет — закомментируйте весь блок deploy:
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    # ── КОНЕЦ БЛОКА GPU ───────────────────────────────────────────────────────
+    restart: unless-stopped
+
+volumes:
+  # Именованный том для кэша моделей HuggingFace
+  hf_cache:

@@ -1,0 +1,17 @@
+# Исключаем тяжёлые данные из контекста сборки Docker
+# Модели монтируются как тома, а не копируются в образ
+
+models/
+data/
+catboost_info/
+figures/
+scripts/
+*.ipynb
+*.ipynb.bak
+*.docx
+*.md
+.git/
+__pycache__/
+*.pyc
+*.pyo
+.env
