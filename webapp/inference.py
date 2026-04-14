@@ -80,17 +80,22 @@ def _ensure_base() -> None:
 
 
 def _run_generate(model, tokenizer, prompt: str, max_new_tokens: int) -> str:
+    device    = next(model.parameters()).device
     messages  = [{"role": "user", "content": prompt}]
-    input_ids = tokenizer.apply_chat_template(
+    encoded   = tokenizer.apply_chat_template(
         messages,
         tokenize              = True,
         add_generation_prompt = True,
         return_tensors        = "pt",
-    ).to(next(model.parameters()).device)
+    )
+
+    # apply_chat_template возвращает тензор или BatchEncoding в зависимости от версии
+    input_ids = (encoded["input_ids"] if hasattr(encoded, "__getitem__") and not isinstance(encoded, torch.Tensor)
+                 else encoded).to(device)
 
     with torch.no_grad():
         output_ids = model.generate(
-            input_ids,
+            input_ids      = input_ids,
             max_new_tokens = max_new_tokens,
             do_sample      = True,
             temperature    = 0.7,
