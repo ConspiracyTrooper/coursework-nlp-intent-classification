@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Чат технической поддержки — Mistral QLoRA</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f0f2f5;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      padding: 24px 16px;
+    }
+
+    h1 {
+      font-size: 1.3rem;
+      color: #1a1a2e;
+      margin-bottom: 16px;
+      text-align: center;
+    }
+
+    /* Переключатель модели */
+    .model-switch {
+      display: flex;
+      gap: 0;
+      border: 2px solid #4a6fa5;
+      border-radius: 8px;
+      overflow: hidden;
+      margin-bottom: 16px;
+    }
+
+    .model-switch label {
+      padding: 8px 20px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #4a6fa5;
+      background: white;
+      transition: background 0.2s, color 0.2s;
+      user-select: none;
+    }
+
+    .model-switch input[type="radio"] { display: none; }
+
+    .model-switch input[type="radio"]:checked + label {
+      background: #4a6fa5;
+      color: white;
+    }
+
+    /* Окно чата */
+    #chat-window {
+      width: 100%;
+      max-width: 700px;
+      height: 480px;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+      overflow-y: auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    /* Пузыри сообщений */
+    .msg {
+      max-width: 75%;
+      padding: 10px 14px;
+      border-radius: 16px;
+      font-size: 0.9rem;
+      line-height: 1.4;
+      word-wrap: break-word;
+    }
+
+    .msg.user {
+      background: #4a6fa5;
+      color: white;
+      align-self: flex-end;
+      border-bottom-right-radius: 4px;
+    }
+
+    .msg.bot-finetuned {
+      background: #e8f5e9;
+      color: #1b5e20;
+      align-self: flex-start;
+      border-bottom-left-radius: 4px;
+    }
+
+    .msg.bot-base {
+      background: #fff3e0;
+      color: #e65100;
+      align-self: flex-start;
+      border-bottom-left-radius: 4px;
+    }
+
+    .msg-label {
+      font-size: 0.72rem;
+      opacity: 0.7;
+      margin-bottom: 4px;
+      align-self: flex-start;
+    }
+
+    /* Панель интента */
+    #intent-panel {
+      width: 100%;
+      max-width: 700px;
+      margin-top: 10px;
+      padding: 10px 14px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.08);
+      font-size: 0.82rem;
+      color: #444;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    #intent-panel strong { color: #1a1a2e; }
+
+    .top3-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 4px;
+    }
+
+    .intent-badge {
+      padding: 3px 8px;
+      border-radius: 12px;
+      font-size: 0.78rem;
+      background: #e3eaf6;
+      color: #2c4a8c;
+    }
+
+    .intent-badge.top { background: #4a6fa5; color: white; }
+
+    /* Поле ввода */
+    #input-row {
+      width: 100%;
+      max-width: 700px;
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    #msg-input {
+      flex: 1;
+      padding: 10px 14px;
+      border: 2px solid #dde3ef;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    #msg-input:focus { border-color: #4a6fa5; }
+
+    #send-btn {
+      padding: 10px 20px;
+      background: #4a6fa5;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    #send-btn:hover { background: #3a5f95; }
+    #send-btn:disabled { background: #aaa; cursor: not-allowed; }
+
+    .thinking { color: #aaa; font-style: italic; font-size: 0.85rem; align-self: flex-start; }
+  </style>
+</head>
+<body>
+  <h1>Чат технической поддержки — Mistral QLoRA Demo</h1>
+
+  <!-- Переключатель базовая / дообученная модель -->
+  <div class="model-switch">
+    <input type="radio" id="m-finetuned" name="model" value="finetuned" checked>
+    <label for="m-finetuned">Дообученная (QLoRA)</label>
+    <input type="radio" id="m-base" name="model" value="base">
+    <label for="m-base">Базовая (без дообучения)</label>
+  </div>
+
+  <div id="chat-window"></div>
+
+  <!-- Панель с определённым интентом -->
+  <div id="intent-panel">
+    <span>Классифицированный интент: <strong id="intent-label">—</strong>
+      <span id="confidence-label"></span></span>
+    <div class="top3-row" id="top3-row"></div>
+  </div>
+
+  <div id="input-row">
+    <input id="msg-input" type="text" placeholder="Напишите ваш вопрос на русском...">
+    <button id="send-btn" onclick="sendMessage()">Отправить</button>
+  </div>
+
+  <script>
+    const chatWindow = document.getElementById('chat-window');
+    const msgInput   = document.getElementById('msg-input');
+    const sendBtn    = document.getElementById('send-btn');
+
+    // Добавляет пузырь сообщения в чат
+    function appendMessage(role, text, modelType) {
+      const div = document.createElement('div');
+
+      if (role === 'user') {
+        div.className = 'msg user';
+        div.textContent = text;
+        chatWindow.appendChild(div);
+      } else {
+        // Метка модели над пузырём
+        const label = document.createElement('div');
+        label.className = 'msg-label';
+        label.textContent = modelType === 'finetuned'
+          ? '🟢 Дообученная модель'
+          : '🟠 Базовая модель';
+        chatWindow.appendChild(label);
+
+        div.className = `msg bot-${modelType}`;
+        div.textContent = text;
+        chatWindow.appendChild(div);
+      }
+
+      chatWindow.scrollTop = chatWindow.scrollHeight;
+      return div;
+    }
+
+    // Обновляет панель интентов
+    function updateIntentPanel(data) {
+      document.getElementById('intent-label').textContent  = data.intent;
+      document.getElementById('confidence-label').textContent =
+        ` (${(data.confidence * 100).toFixed(1)}%)`;
+
+      const top3 = document.getElementById('top3-row');
+      top3.innerHTML = '';
+      data.top3_intents.forEach((item, i) => {
+        const badge = document.createElement('span');
+        badge.className = i === 0 ? 'intent-badge top' : 'intent-badge';
+        badge.textContent = `${item.intent} ${(item.prob * 100).toFixed(0)}%`;
+        top3.appendChild(badge);
+      });
+    }
+
+    async function sendMessage() {
+      const text = msgInput.value.trim();
+      if (!text) return;
+
+      const modelType = document.querySelector('input[name="model"]:checked').value;
+
+      msgInput.value  = '';
+      sendBtn.disabled = true;
+      appendMessage('user', text);
+
+      // Индикатор загрузки
+      const thinking = document.createElement('div');
+      thinking.className = 'thinking';
+      thinking.textContent = 'Модель думает...';
+      chatWindow.appendChild(thinking);
+      chatWindow.scrollTop = chatWindow.scrollHeight;
+
+      try {
+        const resp = await fetch('/chat', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ message: text, model_type: modelType }),
+        });
+
+        chatWindow.removeChild(thinking);
+
+        if (!resp.ok) {
+          const err = await resp.json();
+          appendMessage('bot', `Ошибка: ${err.detail}`, modelType);
+        } else {
+          const data = await resp.json();
+          appendMessage('bot', data.response, modelType);
+          updateIntentPanel(data);
+        }
+      } catch (e) {
+        chatWindow.removeChild(thinking);
+        appendMessage('bot', 'Не удалось подключиться к серверу.', modelType);
+      }
+
+      sendBtn.disabled = false;
+      msgInput.focus();
+    }
+
+    // Отправка по Enter
+    msgInput.addEventListener('keydown', e => {
+      if (e.key === 'Enter' && !sendBtn.disabled) sendMessage();
+    });
+  </script>
+</body>
+</html>
