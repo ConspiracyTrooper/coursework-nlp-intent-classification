@@ -90,12 +90,17 @@ def _run_generate(model, tokenizer, prompt: str, max_new_tokens: int) -> str:
     )
 
     # apply_chat_template возвращает тензор или BatchEncoding в зависимости от версии
-    input_ids = (encoded["input_ids"] if hasattr(encoded, "__getitem__") and not isinstance(encoded, torch.Tensor)
-                 else encoded).to(device)
+    if isinstance(encoded, torch.Tensor):
+        input_ids      = encoded.to(device)
+        attention_mask = torch.ones_like(input_ids)  # промпт без паддинга — всё единицы
+    else:
+        input_ids      = encoded["input_ids"].to(device)
+        attention_mask = encoded.get("attention_mask", torch.ones_like(input_ids)).to(device)
 
     with torch.no_grad():
         output_ids = model.generate(
             input_ids      = input_ids,
+            attention_mask = attention_mask,
             max_new_tokens = max_new_tokens,
             do_sample      = True,
             temperature    = 0.7,
